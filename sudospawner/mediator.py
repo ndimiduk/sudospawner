@@ -63,7 +63,11 @@ def spawn(args, env):
     if 'PYTHONPATH' in env:
         app_log.warn("PYTHONPATH env not allowed for security reasons")
         env.pop('PYTHONPATH')
-    
+
+    # ensure dir exists for log files
+    log_dir = os.path.join(os.path.expanduser("~"), ".sudospawner")
+    os.makedirs(log_dir)
+
     # use fork to prevent zombie process
     # create pipe to get PID from descendant
     r, w = os.pipe()
@@ -89,7 +93,8 @@ def spawn(args, env):
         # we should send stderr to a file
         p = Popen(cmd, env=env,
             cwd=os.path.expanduser('~'),
-            stdout=open(os.devnull, 'w'),
+            stdout=open(os.path.join(log_dir, '%s-%s-stdout' % (getpass.getuser(), os.getpid())), 'a'),
+            stderr=open(os.path.join(log_dir, '%s-%s-stderr' % (getpass.getuser(), os.getpid())), 'a'),
         )
         # pipe finish message to parent
         w = os.fdopen(w, 'w')
